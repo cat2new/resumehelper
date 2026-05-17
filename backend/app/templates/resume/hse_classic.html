@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ resume.title }}</title>
+    <style>
+        @page { size: A4; margin: 18mm 16mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'DejaVu Sans', 'Liberation Sans', sans-serif;
+            font-size: 10.5pt; color: #222; line-height: 1.45; margin: 0;
+        }
+        h1 { font-size: 22pt; color: #1F3469; margin: 0 0 4px 0; letter-spacing: -0.5px; }
+        .header {
+            display: table;
+            width: 100%;
+            border-bottom: 2px solid #1F3469;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+        .header-photo-cell {
+            display: table-cell;
+            width: 220px;
+            vertical-align: top;
+            padding-right: 18px;
+        }
+        .header-photo {
+            width: 200px;
+            height: 260px;
+            object-fit: cover;
+            border: 1px solid #c5cfe3;
+            border-radius: 4px;
+            display: block;
+        }
+        .header-info-cell {
+            display: table-cell;
+            vertical-align: top;
+        }
+        .contacts {
+            color: #555;
+            font-size: 10pt;
+            margin-top: 6px;
+        }
+        .contacts .row { margin: 2px 0; }
+        .contacts .label {
+            color: #1F3469;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        h2 {
+            font-size: 13pt; color: #1F3469; text-transform: uppercase;
+            letter-spacing: 0.6px; margin: 14px 0 6px 0;
+            border-bottom: 1px solid #ccc; padding-bottom: 3px;
+        }
+        .position-block {
+            background: #F4F6FB; padding: 10px 12px;
+            border-left: 3px solid #1F3469; margin-bottom: 12px;
+        }
+        .position-block .target { font-size: 12pt; font-weight: 600; color: #1F3469; }
+        .position-block .field { color: #666; font-size: 10pt; }
+        .item { margin-bottom: 10px; page-break-inside: avoid; }
+        .item-title { font-weight: 600; color: #111; }
+        .item-meta { color: #777; font-size: 9.5pt; margin-bottom: 2px; }
+        .item-desc { margin-top: 3px; text-align: justify; }
+        .item-attachments {
+            margin-top: 6px;
+            padding-top: 4px;
+            border-top: 1px dashed #e0e4ed;
+        }
+        .attachments-label {
+            font-size: 9pt;
+            color: #777;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        .attachments-images {
+            margin-bottom: 8px;
+        }
+        .image-attachment {
+            display: inline-block;
+            vertical-align: top;
+            margin: 4px 10px 8px 0;
+            text-align: left;
+            max-width: 280px;
+        }
+        .attachment-img {
+            display: block;
+            width: 280px;
+            max-width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border: 1px solid #d9dcea;
+            border-radius: 4px;
+        }
+        .image-attachment .attachment-link {
+            margin-top: 4px;
+        }
+        .attachment-link {
+            display: inline-block;
+            background: #EEF1F7;
+            color: #1F3469;
+            text-decoration: underline;
+            padding: 2px 10px;
+            margin: 2px 4px 2px 0;
+            border-radius: 4px;
+            font-size: 9.5pt;
+            font-weight: 600;
+            border: 1px solid #c5cfe3;
+        }
+        .attachment-link-icon {
+            display: inline-block;
+            margin-right: 4px;
+            color: #1F3469;
+            font-weight: 700;
+        }
+        .attachment-link-hint {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 8.5pt;
+            color: #5c6b8a;
+            font-weight: 400;
+            text-decoration: none;
+        }
+        .skills-grid { display: table; width: 100%; border-collapse: collapse; }
+        .skills-row { display: table-row; }
+        .skills-cat {
+            display: table-cell; width: 35%; font-weight: 600;
+            color: #1F3469; vertical-align: top; padding: 3px 8px 3px 0;
+        }
+        .skills-list { display: table-cell; vertical-align: top; padding: 3px 0; }
+        .skill-pill {
+            display: inline-block; background: #EEF1F7; border-radius: 8px;
+            padding: 1px 8px; margin: 1px 4px 1px 0; font-size: 9.5pt;
+        }
+        .skill-pill .lvl { color: #1F3469; font-weight: 600; margin-left: 4px; }
+        .language-list { padding: 0; margin: 0; }
+        .language-item {
+            display: inline-block; background: #F4F6FB; border-left: 3px solid #1F3469;
+            padding: 3px 10px; margin: 2px 6px 2px 0; font-size: 10pt;
+        }
+        .language-item .lvl { color: #1F3469; font-weight: 600; margin-left: 6px; }
+        .footer {
+            margin-top: 18px; font-size: 8.5pt; color: #999;
+            text-align: center; border-top: 1px solid #eee; padding-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    {% if owner.photo_fetch_url or owner.photo_url %}
+    <div class="header-photo-cell">
+        <img class="header-photo" src="{{ owner.photo_fetch_url or owner.photo_url }}" alt="Фото" />
+    </div>
+    {% endif %}
+    <div class="header-info-cell">
+        <h1>{{ owner.full_name }}</h1>
+        <div class="contacts">
+            {% if owner.email %}<div class="row"><span class="label">Email:</span>{{ owner.email }}</div>{% endif %}
+            {% if owner.phone %}<div class="row"><span class="label">Телефон:</span>{{ owner.phone }}</div>{% endif %}
+            <div class="row" style="color:#888;font-size:9pt;margin-top:4px;">Дата составления: {{ resume.creation_date }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="position-block">
+    <div class="target">Целевая должность: {{ resume.position_name }}</div>
+    <div class="field">
+        Сфера: {{ resume.field_name }}{% if resume.company %} · Компания: {{ resume.company }}{% endif %}
+    </div>
+</div>
+
+{% if educations %}
+<h2>Образование</h2>
+{% for edu in educations %}
+<div class="item">
+    <div class="item-title">{{ edu.institution }} — {{ edu.program_name }}</div>
+    <div class="item-meta">
+        {% if edu.start_year %}{{ edu.start_year }} — {{ edu.graduation_year }}{% else %}Год окончания: {{ edu.graduation_year }}{% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if experiences %}
+<h2>Опыт и проекты</h2>
+{% for exp in experiences %}
+<div class="item">
+    <div class="item-title">{{ exp.project_name }}</div>
+    <div class="item-meta">
+        {{ exp.type_name }}{% if exp.discipline_name %} · {{ exp.discipline_name }}{% endif %}
+    </div>
+    {% if exp.description %}
+    <div class="item-desc">{{ exp.description }}</div>
+    {% endif %}
+    {% if exp.images or exp.other_files %}
+    <div class="item-attachments">
+        <div class="attachments-label">Подтверждения из портфолио:</div>
+        {% if exp.images %}
+        <div class="attachments-images">
+            {% for img in exp.images %}
+            <div class="image-attachment">
+                <a href="{{ img.storage_url }}"><img class="attachment-img" src="{{ img.fetch_url or img.storage_url }}" alt="{{ img.file_name }}" /></a>
+                <br>
+                <a class="attachment-link" href="{{ img.storage_url }}"><span class="attachment-link-icon">↗</span>{{ img.file_name }}</a><span class="attachment-link-hint">— нажмите, чтобы открыть</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% for f in exp.other_files %}
+        <a class="attachment-link" href="{{ f.storage_url }}"><span class="attachment-link-icon">↗</span>{{ f.file_name }}</a><span class="attachment-link-hint">— нажмите, чтобы открыть</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if skills_by_category %}
+<h2>Навыки</h2>
+<div class="skills-grid">
+    {% for cat, items in skills_by_category.items() %}
+    <div class="skills-row">
+        <div class="skills-cat">{{ cat }}</div>
+        <div class="skills-list">
+            {% for s in items %}
+            <span class="skill-pill">{{ s.skill_name }}<span class="lvl">{{ s.skill_level }}</span></span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if languages %}
+<h2>Иностранные языки</h2>
+<div class="language-list">
+    {% for lang in languages %}
+    <span class="language-item">{{ lang.language_name }}<span class="lvl">{{ lang.proficiency }}</span></span>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="footer">
+    Создано в системе ResumeHelper НИУ ВШЭ
+</div>
+
+</body>
+</html>

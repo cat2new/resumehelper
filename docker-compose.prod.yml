@@ -1,0 +1,113 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: resumehelper-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - resumehelper
+
+  minio:
+    image: minio/minio:latest
+    container_name: resumehelper-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://minio:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - resumehelper
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: resumehelper-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      mc mb --ignore-existing local/$$MINIO_BUCKET;
+      mc anonymous set download local/$$MINIO_BUCKET;
+      echo 'MinIO bucket готов';
+      exit 0;
+      "
+    networks:
+      - resumehelper
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: resumehelper-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_SECURE: "false"
+      IO_NET_API_KEY: ${IO_NET_API_KEY:-}
+      IO_NET_BASE_URL: ${IO_NET_BASE_URL}
+      IO_NET_MODEL: ${IO_NET_MODEL}
+      AI_MOCK_MODE: ${AI_MOCK_MODE}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ENVIRONMENT: ${ENVIRONMENT}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.seed &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    networks:
+      - resumehelper
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: resumehelper-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - resumehelper
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  resumehelper:
+    driver: bridge
