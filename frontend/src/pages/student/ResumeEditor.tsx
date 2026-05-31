@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Loader2, Plus, Trash2, Sparkles, FileDown, Check, X, Paperclip, Image as ImageIcon, FileText, Unlink, Pencil, AlertCircle } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Loader2, Plus, Trash2, Sparkles, FileDown, Check, X, Paperclip, Image as ImageIcon, FileText, Unlink, Pencil } from 'lucide-react';
 import { aiApi, dictApi, exportApi, portfolioApi, positionsApi, resumesApi, skillsApi } from '@/api';
 import type {
   Discipline,
@@ -41,7 +41,6 @@ export function ResumeEditorPage() {
 
   const [resume, setResume] = useState<ResumeDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('basic');
 
   const [programs, setPrograms] = useState<EducationalProgram[]>([]);
@@ -78,30 +77,8 @@ export function ResumeEditorPage() {
         setLanguagesCatalog(lg);
         setStatuses(st);
       })
-      .catch((err: any) => {
-        if (err?.status === 404) {
-          setError('Резюме не найдено');
-        } else {
-          setError('Не удалось загрузить резюме');
-        }
-      })
       .finally(() => setLoading(false));
   }, [resumeId]);
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-        <AlertCircle className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-semibold">{error}</h2>
-        <p className="text-muted-foreground max-w-md">
-          Возможно, оно было удалено или принадлежит другому пользователю.
-        </p>
-        <Link to="/dashboard">
-          <Button variant="default">Вернуться к списку резюме</Button>
-        </Link>
-      </div>
-    );
-  }
 
   if (loading || !resume) {
     return (

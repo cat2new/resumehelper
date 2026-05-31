@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { Plus, FileText, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, FileText, Trash2, Loader2, AlertCircle, Filter, X, Briefcase } from 'lucide-react';
 import { dictApi, positionsApi, profileApi, resumesApi, templatesApi } from '@/api';
 import type { Position, Profile, ProfessionalField, ResumeListItem, Template } from '@/types/api';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,42 @@ export function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+
+  // Фильтры
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterProgressMin, setFilterProgressMin] = useState<number>(0);
+  const [filterProgressMax, setFilterProgressMax] = useState<number>(100);
+  const [filterPosition, setFilterPosition] = useState<string>('all');
+
+  const positionOptions = useMemo(() => {
+    const set = new Set<string>();
+    resumes.forEach((r) => {
+      if (r.position_name) set.add(r.position_name);
+    });
+    return Array.from(set).sort();
+  }, [resumes]);
+
+  const filteredResumes = useMemo(() => {
+    return resumes.filter((r) => {
+      if (filterStatus !== 'all' && r.status_name !== filterStatus) return false;
+      if (r.progress < filterProgressMin || r.progress > filterProgressMax) return false;
+      if (filterPosition !== 'all' && r.position_name !== filterPosition) return false;
+      return true;
+    });
+  }, [resumes, filterStatus, filterProgressMin, filterProgressMax, filterPosition]);
+
+  const filtersActive =
+    filterStatus !== 'all' ||
+    filterProgressMin !== 0 ||
+    filterProgressMax !== 100 ||
+    filterPosition !== 'all';
+
+  const resetFilters = () => {
+    setFilterStatus('all');
+    setFilterProgressMin(0);
+    setFilterProgressMax(100);
+    setFilterPosition('all');
+  };
 
   const refresh = () => {
     setLoading(true);
@@ -84,6 +120,80 @@ export function DashboardPage() {
         </div>
       )}
 
+      {!loading && resumes.length > 0 && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 mb-3 text-sm font-medium">
+              <Filter className="h-4 w-4" />
+              <span>Фильтры</span>
+              {filtersActive && (
+                <button
+                  onClick={resetFilters}
+                  className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                  Сбросить
+                </button>
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <Label className="text-xs">Статус</Label>
+                <Select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="all">Все</option>
+                  <option value="Черновик">Черновик</option>
+                  <option value="Готово">Готово</option>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Должность</Label>
+                <Select
+                  value={filterPosition}
+                  onChange={(e) => setFilterPosition(e.target.value)}
+                >
+                  <option value="all">Все</option>
+                  {positionOptions.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Прогресс от, %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={filterProgressMin}
+                  onChange={(e) =>
+                    setFilterProgressMin(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Прогресс до, %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={filterProgressMax}
+                  onChange={(e) =>
+                    setFilterProgressMax(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
+                  }
+                />
+              </div>
+            </div>
+            {filtersActive && (
+              <div className="mt-3 text-xs text-muted-foreground">
+                Показано: {filteredResumes.length} из {resumes.length}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -98,16 +208,31 @@ export function DashboardPage() {
             </Button>
           </CardContent>
         </Card>
+      ) : filteredResumes.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground/40" />
+            <p className="mt-3 text-muted-foreground">
+              Под текущие фильтры ничего не подходит
+            </p>
+            <Button variant="outline" onClick={resetFilters} className="mt-4">
+              Сбросить фильтры
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {resumes.map((r) => (
+          {filteredResumes.map((r) => (
             <Card key={r.resume_id} className="flex flex-col">
               <CardHeader className="flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <CardTitle className="truncate">{r.title}</CardTitle>
-                    <CardDescription className="mt-1 line-clamp-1">
-                      {r.position_name}
+                    <CardDescription className="mt-1 flex items-center gap-1.5 text-xs">
+                      <Briefcase className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">
+                        Должность: {r.position_name || '—'}
+                      </span>
                     </CardDescription>
                   </div>
                   <Badge variant={statusVariant[r.status_name] || 'secondary'}>

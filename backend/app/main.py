@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.api.routers import ai, auth, dictionaries, export, portfolio, positions, profile, resumes, skills, templates
+from app.api.routers import admin, ai, auth, dictionaries, export, portfolio, positions, profile, resumes, skills, templates
 
 app = FastAPI(
     title="ResumeHelper API",
@@ -45,3 +45,4 @@ app.include_router(resumes.router)
 app.include_router(portfolio.router)
 app.include_router(ai.router)
 app.include_router(export.router)
+app.include_router(admin.router)

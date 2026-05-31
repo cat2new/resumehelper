@@ -20,10 +20,15 @@ export function LoginPage() {
     try {
       const res = await authApi.login(email, password);
       loginUser(
-        { user_id: res.user_id, email: res.email, full_name: res.full_name },
+        {
+          user_id: res.user_id,
+          email: res.email,
+          full_name: res.full_name,
+          is_admin: res.is_admin,
+        },
         res.session_token
       );
-      navigate('/');
+      navigate(res.is_admin ? '/admin' : '/');
     } catch (err: any) {
       setError(err.detail || 'Ошибка входа');
     } finally {

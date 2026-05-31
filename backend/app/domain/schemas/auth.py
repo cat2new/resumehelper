@@ -20,6 +20,7 @@ class LoginResponse(BaseModel):
     email: str
     session_token: str
     full_name: str
+    is_admin: bool = False
     message: str = "Добро пожаловать!"
 
 
@@ -28,3 +29,4 @@ class CurrentUserOut(BaseModel):
     user_id: int
     email: str
     full_name: str
+    is_admin: bool = False

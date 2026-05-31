@@ -15,6 +15,7 @@ import type {
   Position,
   Profile,
   ProfessionalField,
+  ResetPasswordResponse,
   ResumeDetail,
   ResumeLanguage,
   ResumeListItem,
@@ -23,6 +24,7 @@ import type {
   Skill,
   SkillCategory,
   Template,
+  UserSearchItem,
 } from '@/types/api';
 
 // Auth
@@ -170,4 +172,17 @@ export const aiApi = {
 export const exportApi = {
   pdfUrl: (resumeId: number) => downloadUrl(`/api/resumes/${resumeId}/export/pdf`),
   docxUrl: (resumeId: number) => downloadUrl(`/api/resumes/${resumeId}/export/docx`),
+};
+
+// Admin
+export const adminApi = {
+  searchUsers: (search: string = '') => {
+    const q = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiRequest<UserSearchItem[]>(`/api/admin/users${q}`);
+  },
+  resetPassword: (userId: number, newPassword: string) =>
+    apiRequest<ResetPasswordResponse>(`/api/admin/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: { new_password: newPassword },
+    }),
 };

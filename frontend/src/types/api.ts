@@ -6,6 +6,7 @@ export interface LoginResponse {
   email: string;
   session_token: string;
   full_name: string;
+  is_admin: boolean;
   message: string;
 }
 
@@ -13,6 +14,24 @@ export interface CurrentUser {
   user_id: number;
   email: string;
   full_name: string;
+  is_admin: boolean;
+}
+
+// Admin
+export interface UserSearchItem {
+  user_id: number;
+  email: string;
+  full_name: string;
+  phone: string;
+  is_admin: boolean;
+  created_at: string;
+}
+
+export interface ResetPasswordResponse {
+  user_id: number;
+  email: string;
+  new_password: string;
+  message: string;
 }
 
 export interface Profile {

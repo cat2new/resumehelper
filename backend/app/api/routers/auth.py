@@ -42,6 +42,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> LoginRe
         email=user.email,
         session_token=user.session_token or "",
         full_name=user.full_name,
+        is_admin=user.is_admin,
         message="Регистрация прошла успешно!",
     )
 
@@ -67,6 +68,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
         email=user.email,
         session_token=user.session_token or "",
         full_name=user.full_name,
+        is_admin=user.is_admin,
     )
 
 
